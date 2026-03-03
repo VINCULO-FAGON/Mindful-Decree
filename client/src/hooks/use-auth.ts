@@ -10,9 +10,8 @@ export function useUser() {
   return useQuery({
     queryKey: AUTH_KEY,
     queryFn: () => {
-      // Return null initially, or fetch from localStorage if we wanted persistence
-      // For this demo, we rely on the mutation to set the state
-      return null;
+      const stored = localStorage.getItem("yo_decreto_user");
+      return stored ? JSON.parse(stored) : null;
     },
     staleTime: Infinity,
   });
@@ -30,10 +29,13 @@ export function useLogin() {
       });
       
       if (!res.ok) {
-        throw new Error("Credenciales inválidas");
+        const errorData = await res.json();
+        throw new Error(errorData.message || "Credenciales inválidas");
       }
       
-      return api.auth.login.responses[200].parse(await res.json());
+      const user = api.auth.login.responses[200].parse(await res.json());
+      localStorage.setItem("yo_decreto_user", JSON.stringify(user));
+      return user;
     },
     onSuccess: (user) => {
       queryClient.setQueryData(AUTH_KEY, user);
@@ -53,10 +55,13 @@ export function useRegister() {
       });
       
       if (!res.ok) {
-        throw new Error("Error al registrarse");
+        const errorData = await res.json();
+        throw new Error(errorData.message || "Error al registrarse");
       }
       
-      return api.auth.register.responses[201].parse(await res.json());
+      const user = api.auth.register.responses[201].parse(await res.json());
+      localStorage.setItem("yo_decreto_user", JSON.stringify(user));
+      return user;
     },
     onSuccess: (user) => {
       queryClient.setQueryData(AUTH_KEY, user);
@@ -67,6 +72,7 @@ export function useRegister() {
 export function useLogout() {
   const queryClient = useQueryClient();
   return () => {
+    localStorage.removeItem("yo_decreto_user");
     queryClient.setQueryData(AUTH_KEY, null);
   };
 }

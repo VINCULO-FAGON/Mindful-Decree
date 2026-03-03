@@ -14,39 +14,60 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
-  
-  // Dummy auth for MVP
-  let currentUserId = 1;
+
+  app.post(api.auth.register.path, async (req, res) => {
+    try {
+      const input = api.auth.register.input.parse(req.body);
+      const existingUser = await storage.getUserByUsername(input.username);
+      if (existingUser) {
+        return res.status(400).json({ message: "El usuario ya existe" });
+      }
+      const user = await storage.createUser(input);
+      res.status(201).json(user);
+    } catch (err) {
+      res.status(400).json({ message: "Error en el registro" });
+    }
+  });
+
+  app.post(api.auth.login.path, async (req, res) => {
+    try {
+      const { username, password } = api.auth.login.input.parse(req.body);
+      const user = await storage.getUserByUsername(username);
+      if (!user || user.password !== password) {
+        return res.status(401).json({ message: "Credenciales inválidas" });
+      }
+      res.json(user);
+    } catch (err) {
+      res.status(400).json({ message: "Error en el inicio de sesión" });
+    }
+  });
 
   app.get(api.checkins.list.path, async (req, res) => {
-    const checkins = await storage.getCheckins(currentUserId);
+    const userId = Number(req.query.userId) || 1;
+    const checkins = await storage.getCheckins(userId);
     res.json(checkins);
   });
 
   app.post(api.checkins.create.path, async (req, res) => {
     try {
       const input = api.checkins.create.input.parse(req.body);
-      const checkin = await storage.createCheckin({ ...input, userId: currentUserId });
+      const checkin = await storage.createCheckin(input);
       res.status(201).json(checkin);
     } catch (err) {
-      if (err instanceof z.ZodError) {
-        return res.status(400).json({
-          message: err.errors[0].message,
-          field: err.errors[0].path.join('.'),
-        });
-      }
-      throw err;
+      res.status(400).json({ message: "Error al crear check-in" });
     }
   });
 
   app.get(api.amanda.history.path, async (req, res) => {
-    const chats = await storage.getChats(currentUserId);
+    const userId = Number(req.query.userId) || 1;
+    const chats = await storage.getChats(userId);
     res.json(chats);
   });
 
   app.post(api.amanda.chat.path, async (req, res) => {
     try {
-      const { message } = api.amanda.chat.input.parse(req.body);
+      const { message, userId } = z.object({ message: z.string(), userId: z.number().optional() }).parse(req.body);
+      const uid = userId || 1;
       
       let aiResponseText = "Lo siento, hubo un error al conectar con mis sistemas. ¿Podemos intentarlo de nuevo?";
       let audioUrl;
@@ -87,7 +108,7 @@ export async function registerRoutes(
       }
 
       await storage.createChat({
-        userId: currentUserId,
+        userId: uid,
         message,
         response: aiResponseText
       });
