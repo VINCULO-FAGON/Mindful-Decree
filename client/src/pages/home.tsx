@@ -4,6 +4,7 @@ import { HoloCard } from "@/components/holo-card";
 import { Link, useLocation } from "wouter";
 import { motion } from "framer-motion";
 import { Activity, MessageCircle, Shield, BrainCircuit, Sparkles } from "lucide-react";
+import { useEffect } from "react";
 
 export default function Home() {
   const { data: user } = useUser();
