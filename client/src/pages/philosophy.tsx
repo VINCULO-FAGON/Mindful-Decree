@@ -1,8 +1,20 @@
 import { Layout } from "@/components/layout";
 import { HoloCard } from "@/components/holo-card";
 import { Shield, Target, Brain, ArrowUpRight } from "lucide-react";
+import { useUser } from "@/hooks/use-auth";
+import { useLocation } from "wouter";
+import { useEffect } from "react";
 
 export default function Philosophy() {
+  const { data: user } = useUser();
+  const [, setLocation] = useLocation();
+
+  useEffect(() => {
+    if (!user) {
+      setLocation("/login");
+    }
+  }, [user, setLocation]);
+
   const principles = [
     {
       icon: Target,

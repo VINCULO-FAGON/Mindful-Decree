@@ -1,13 +1,24 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Layout } from "@/components/layout";
 import { HoloCard } from "@/components/holo-card";
 import { GlowButton } from "@/components/glow-button";
 import { useCheckins, useCreateCheckin } from "@/hooks/use-checkins";
+import { useUser } from "@/hooks/use-auth";
+import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 import { Activity, Plus, Frown, Meh, Smile, Zap } from "lucide-react";
 
 export default function Checkins() {
+  const { data: user } = useUser();
+  const [, setLocation] = useLocation();
+
+  useEffect(() => {
+    if (!user) {
+      setLocation("/login");
+    }
+  }, [user, setLocation]);
+
   const { data: checkins = [], isLoading } = useCheckins();
   const createCheckin = useCreateCheckin();
   const { toast } = useToast();

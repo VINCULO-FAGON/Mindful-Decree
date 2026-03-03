@@ -3,10 +3,20 @@ import { Layout } from "@/components/layout";
 import { useAmandaChat, useAmandaHistory } from "@/hooks/use-amanda";
 import { motion, AnimatePresence } from "framer-motion";
 import { Send, Cpu, User, Volume2, Loader2 } from "lucide-react";
+import { useUser } from "@/hooks/use-auth";
+import { useLocation } from "wouter";
 
 export default function Chat() {
   const [input, setInput] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
+  const { data: user } = useUser();
+  const [, setLocation] = useLocation();
+
+  useEffect(() => {
+    if (!user) {
+      setLocation("/login");
+    }
+  }, [user, setLocation]);
   
   const { data: history = [], isLoading: historyLoading } = useAmandaHistory();
   const chatMutation = useAmandaChat();

@@ -9,8 +9,13 @@ export default function Home() {
   const { data: user } = useUser();
   const [, setLocation] = useLocation();
 
+  useEffect(() => {
+    if (!user) {
+      setLocation("/login");
+    }
+  }, [user, setLocation]);
+
   if (!user) {
-    setLocation("/login");
     return null;
   }
 

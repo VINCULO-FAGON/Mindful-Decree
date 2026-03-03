@@ -19,8 +19,13 @@ export default function Login() {
   
   const { data: user } = useUser();
 
+  useEffect(() => {
+    if (user) {
+      setLocation("/");
+    }
+  }, [user, setLocation]);
+
   if (user) {
-    setLocation("/");
     return null;
   }
 

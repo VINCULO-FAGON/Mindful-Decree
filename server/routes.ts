@@ -43,15 +43,22 @@ export async function registerRoutes(
   });
 
   app.get(api.checkins.list.path, async (req, res) => {
-    const userId = Number(req.query.userId) || 1;
+    const userId = Number(req.query.userId);
+    if (!userId) return res.status(400).json({ message: "userId is required" });
     const checkins = await storage.getCheckins(userId);
     res.json(checkins);
   });
 
   app.post(api.checkins.create.path, async (req, res) => {
     try {
-      const input = api.checkins.create.input.parse(req.body);
-      const checkin = await storage.createCheckin(input);
+      const { mood, cravingsLevel, notes, userId } = z.object({
+        mood: z.string(),
+        cravingsLevel: z.number(),
+        notes: z.string().optional(),
+        userId: z.number()
+      }).parse(req.body);
+      
+      const checkin = await storage.createCheckin({ mood, cravingsLevel, notes: notes || "", userId });
       res.status(201).json(checkin);
     } catch (err) {
       res.status(400).json({ message: "Error al crear check-in" });
@@ -59,15 +66,16 @@ export async function registerRoutes(
   });
 
   app.get(api.amanda.history.path, async (req, res) => {
-    const userId = Number(req.query.userId) || 1;
+    const userId = Number(req.query.userId);
+    if (!userId) return res.status(400).json({ message: "userId is required" });
     const chats = await storage.getChats(userId);
     res.json(chats);
   });
 
   app.post(api.amanda.chat.path, async (req, res) => {
     try {
-      const { message, userId } = z.object({ message: z.string(), userId: z.number().optional() }).parse(req.body);
-      const uid = userId || 1;
+      const { message, userId } = z.object({ message: z.string(), userId: z.number() }).parse(req.body);
+      const uid = userId;
       
       let aiResponseText = "Lo siento, hubo un error al conectar con mis sistemas. ¿Podemos intentarlo de nuevo?";
       let audioUrl;
