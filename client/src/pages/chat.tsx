@@ -1,0 +1,164 @@
+import { useState, useRef, useEffect } from "react";
+import { Layout } from "@/components/layout";
+import { useAmandaChat, useAmandaHistory } from "@/hooks/use-amanda";
+import { motion, AnimatePresence } from "framer-motion";
+import { Send, Cpu, User, Volume2, Loader2 } from "lucide-react";
+
+export default function Chat() {
+  const [input, setInput] = useState("");
+  const scrollRef = useRef<HTMLDivElement>(null);
+  
+  const { data: history = [], isLoading: historyLoading } = useAmandaHistory();
+  const chatMutation = useAmandaChat();
+  
+  // Local state to show optimistic messages
+  const [localMessages, setLocalMessages] = useState<Array<{role: 'user'|'amanda', content: string}>>([]);
+
+  useEffect(() => {
+    if (history.length > 0 && localMessages.length === 0) {
+      const formatted = history.flatMap(h => [
+        { role: 'user' as const, content: h.message },
+        { role: 'amanda' as const, content: h.response }
+      ]);
+      setLocalMessages(formatted);
+    }
+  }, [history]);
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [localMessages, chatMutation.isPending]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!input.trim() || chatMutation.isPending) return;
+
+    const messageToSend = input;
+    setInput("");
+    
+    setLocalMessages(prev => [...prev, { role: 'user', content: messageToSend }]);
+
+    chatMutation.mutate(messageToSend, {
+      onSuccess: (data) => {
+        setLocalMessages(prev => [...prev, { role: 'amanda', content: data.response }]);
+        
+        // Play audio if provided by the API
+        if (data.audioUrl) {
+          try {
+            const audio = new Audio(data.audioUrl);
+            audio.play().catch(e => console.error("Audio playback blocked:", e));
+          } catch (e) {
+            console.error("Failed to play audio:", e);
+          }
+        }
+      }
+    });
+  };
+
+  return (
+    <Layout>
+      <div className="flex flex-col h-[calc(100vh-6rem)] pb-4">
+        
+        <header className="flex items-center gap-3 pb-4 border-b border-primary/20 shrink-0">
+          <div className="relative">
+            <div className="w-10 h-10 rounded-full bg-primary/20 border border-primary flex items-center justify-center">
+              <Cpu className="w-5 h-5 text-primary" />
+            </div>
+            <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-primary rounded-full animate-pulse shadow-[0_0_10px_#00f0ff]" />
+          </div>
+          <div>
+            <h1 className="font-display font-bold text-lg text-glow-primary leading-tight">Amanda</h1>
+            <p className="text-xs text-primary/70 font-mono flex items-center gap-1">
+              <Volume2 className="w-3 h-3" /> Audio Activo - Experta en TCC
+            </p>
+          </div>
+        </header>
+
+        <div className="flex-1 overflow-y-auto py-4 space-y-6 pr-2 custom-scrollbar" ref={scrollRef}>
+          {historyLoading && localMessages.length === 0 ? (
+            <div className="flex justify-center items-center h-full text-primary/50">
+              <Loader2 className="w-8 h-8 animate-spin" />
+            </div>
+          ) : localMessages.length === 0 ? (
+            <div className="h-full flex flex-col items-center justify-center text-center opacity-50">
+              <Cpu className="w-16 h-16 mb-4 text-primary" />
+              <p className="font-display">CONEXIÓN ESTABLECIDA</p>
+              <p className="text-sm">Hola, soy Amanda. Estoy aquí para escucharte y apoyarte con total honestidad.</p>
+            </div>
+          ) : (
+            <AnimatePresence initial={false}>
+              {localMessages.map((msg, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                >
+                  <div className={`max-w-[85%] flex gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
+                    
+                    <div className="shrink-0 mt-1">
+                      {msg.role === 'user' ? (
+                        <div className="w-8 h-8 rounded-full bg-accent/20 border border-accent flex items-center justify-center shadow-[0_0_10px_rgba(176,38,255,0.2)]">
+                          <User className="w-4 h-4 text-accent" />
+                        </div>
+                      ) : (
+                        <div className="w-8 h-8 rounded-full bg-primary/20 border border-primary flex items-center justify-center shadow-[0_0_10px_rgba(0,240,255,0.2)]">
+                          <Cpu className="w-4 h-4 text-primary" />
+                        </div>
+                      )}
+                    </div>
+
+                    <div className={`p-4 rounded-2xl ${
+                      msg.role === 'user' 
+                        ? 'bg-accent/10 border border-accent/30 rounded-tr-sm text-foreground' 
+                        : 'bg-primary/10 border border-primary/30 rounded-tl-sm text-primary-foreground text-white'
+                    }`}>
+                      <p className="text-sm md:text-base leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+              
+              {chatMutation.isPending && (
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-start">
+                  <div className="flex gap-3">
+                    <div className="w-8 h-8 rounded-full bg-primary/20 border border-primary flex items-center justify-center">
+                      <Cpu className="w-4 h-4 text-primary" />
+                    </div>
+                    <div className="p-4 rounded-2xl bg-primary/10 border border-primary/30 rounded-tl-sm flex items-center gap-1">
+                      <div className="w-2 h-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: '0ms' }} />
+                      <div className="w-2 h-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: '150ms' }} />
+                      <div className="w-2 h-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: '300ms' }} />
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          )}
+        </div>
+
+        <div className="shrink-0 pt-2">
+          <form onSubmit={handleSubmit} className="relative flex items-center">
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Escribe a Amanda..."
+              disabled={chatMutation.isPending}
+              className="w-full bg-card/80 backdrop-blur-md border border-primary/30 rounded-full py-4 pl-6 pr-14 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/50 shadow-[0_0_15px_rgba(0,0,0,0.5)]"
+            />
+            <button
+              type="submit"
+              disabled={!input.trim() || chatMutation.isPending}
+              className="absolute right-2 p-2 bg-primary/20 text-primary rounded-full hover:bg-primary hover:text-background transition-all disabled:opacity-50 disabled:hover:bg-primary/20 disabled:hover:text-primary"
+            >
+              <Send className="w-5 h-5" />
+            </button>
+          </form>
+        </div>
+
+      </div>
+    </Layout>
+  );
+}
