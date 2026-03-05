@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useLogin, useRegister, useUser } from "@/hooks/use-auth";
 import { HoloCard } from "@/components/holo-card";
