@@ -56,8 +56,12 @@ export default function Chat() {
         // Play audio if provided by the API
         if (data.audioUrl) {
           try {
+            // Refined audio playback logic
             const audio = new Audio(data.audioUrl);
-            audio.play().catch(e => console.error("Audio playback blocked:", e));
+            audio.playbackRate = 1.05; // Slightly faster for more youthful energy
+            audio.play().catch(e => {
+              console.warn("Audio playback blocked, requires user interaction or permission:", e);
+            });
           } catch (e) {
             console.error("Failed to play audio:", e);
           }
