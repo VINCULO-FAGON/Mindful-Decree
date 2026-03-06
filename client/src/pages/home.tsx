@@ -28,7 +28,8 @@ export default function Home() {
       href: "/chat",
       color: "text-primary",
       bg: "bg-primary/10",
-      delay: 0.1
+      delay: 0.1,
+      isPrimary: true
     },
     {
       title: "Check-in Diario",
@@ -82,21 +83,25 @@ export default function Home() {
           </HoloCard>
 
           {modules.map((mod) => (
-            <Link key={mod.href} href={mod.href}>
+            <Link key={mod.href} href={mod.href} className={mod.isPrimary ? "md:col-span-2" : ""}>
               <HoloCard 
                 delay={mod.delay}
-                className="cursor-pointer hover:border-primary/50 transition-all group h-full flex flex-col justify-between"
+                variant={mod.isPrimary ? "primary" : "accent"}
+                className="cursor-pointer hover:border-primary/50 transition-all group h-full flex flex-col justify-between overflow-hidden relative"
               >
+                {mod.isPrimary && (
+                  <div className="absolute -right-4 -top-4 w-24 h-24 bg-primary/5 rounded-full blur-2xl group-hover:bg-primary/10 transition-colors" />
+                )}
                 <div>
-                  <div className={`w-12 h-12 rounded-xl ${mod.bg} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
+                  <div className={`w-12 h-12 rounded-xl ${mod.bg} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform border border-white/5`}>
                     <mod.icon className={`w-6 h-6 ${mod.color}`} />
                   </div>
-                  <h3 className="text-lg font-bold mb-2">{mod.title}</h3>
+                  <h3 className={`text-lg font-bold mb-2 ${mod.isPrimary ? "text-glow-primary" : ""}`}>{mod.title}</h3>
                   <p className="text-sm text-muted-foreground">{mod.desc}</p>
                 </div>
                 <div className="mt-4 flex justify-end">
                   <span className={`text-xs uppercase tracking-widest font-mono ${mod.color} opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1`}>
-                    Acceder <span className="text-lg leading-none">›</span>
+                    {mod.isPrimary ? "CONECTAR" : "Acceder"} <span className="text-lg leading-none">›</span>
                   </span>
                 </div>
               </HoloCard>

@@ -82,9 +82,9 @@ export default function Chat() {
             <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-primary rounded-full animate-pulse shadow-[0_0_10px_#00f0ff]" />
           </div>
           <div>
-            <h1 className="font-display font-bold text-lg text-glow-primary leading-tight">Amanda</h1>
-            <p className="text-xs text-primary/70 font-mono flex items-center gap-1">
-              <Volume2 className="w-3 h-3" /> Audio Activo - Experta en TCC
+            <h1 className="font-display font-bold text-lg text-glow-primary leading-tight">Amanda AI</h1>
+            <p className="text-[10px] text-primary/70 font-mono flex items-center gap-1 uppercase tracking-tighter">
+              <Volume2 className="w-3 h-3" /> Conexión Neural Activa
             </p>
           </div>
         </header>

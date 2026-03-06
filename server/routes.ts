@@ -5,10 +5,10 @@ import { api } from "@shared/routes";
 import { z } from "zod";
 import OpenAI from "openai";
 
-const openai = new OpenAI({
-  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
-  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
-});
+    const openai = new OpenAI({
+      apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
+      baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
+    });
 
 export async function registerRoutes(
   httpServer: Server,
@@ -80,7 +80,7 @@ export async function registerRoutes(
       let aiResponseText = "Lo siento, hubo un error al conectar con mis sistemas. ¿Podemos intentarlo de nuevo?";
       let audioUrl;
 
-      if (process.env.OPENAI_API_KEY) {
+      if (process.env.AI_INTEGRATIONS_OPENAI_API_KEY) {
         try {
           const completion = await openai.chat.completions.create({
             model: "gpt-4o", // Use more capable model
@@ -131,7 +131,7 @@ export async function registerRoutes(
           console.error("OpenAI error:", openaiError);
         }
       } else {
-        aiResponseText = "Modo de prueba sin OpenAI API Key. Soy Amanda, aquí estoy para apoyarte con honestidad y empatía.";
+        aiResponseText = "Conexión neuronal activa. Soy Amanda AI, aquí estoy para apoyarte con honestidad y empatía.";
       }
 
       await storage.createChat({

@@ -5,7 +5,7 @@ import { HoloCard } from "@/components/holo-card";
 import { GlowButton } from "@/components/glow-button";
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
-import { Fingerprint, User, Lock } from "lucide-react";
+import { BrainCircuit, User, Lock } from "lucide-react";
 
 export default function Login() {
   const [isLogin, setIsLogin] = useState(true);
@@ -61,14 +61,14 @@ export default function Login() {
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-8"
         >
-          <div className="inline-flex items-center justify-center p-4 rounded-full bg-primary/10 border border-primary/30 mb-4 shadow-[0_0_30px_rgba(0,240,255,0.2)]">
-            <Fingerprint className="w-12 h-12 text-primary" />
+          <div className="inline-flex items-center justify-center p-4 rounded-2xl bg-primary/10 border border-primary/20 mb-4 shadow-[0_0_30px_rgba(0,240,255,0.2)]">
+            <BrainCircuit className="w-12 h-12 text-primary animate-pulse" />
           </div>
-          <h1 className="text-4xl font-display text-glow-primary text-white font-bold tracking-[0.2em] uppercase">
+          <h1 className="text-4xl font-display text-glow-primary text-white font-black tracking-tighter uppercase italic">
             Yo Decreto
           </h1>
-          <p className="text-primary/70 mt-2 font-mono text-sm tracking-widest">
-            SISTEMA DE APOYO Y REHABILITACIÓN
+          <p className="text-primary/70 mt-2 font-mono text-xs tracking-widest uppercase">
+            Soberanía Mental / Recuperación Cognitiva
           </p>
         </motion.div>
 
