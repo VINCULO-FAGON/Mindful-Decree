@@ -2,15 +2,91 @@ import { useState, useRef, useEffect } from "react";
 import { Layout } from "@/components/layout";
 import { useAmandaChat, useAmandaHistory } from "@/hooks/use-amanda";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, Cpu, User, Volume2, Loader2 } from "lucide-react";
+import { Send, Cpu, User, Volume2, Loader2, Copy, Mic, MicOff } from "lucide-react";
 import { useUser } from "@/hooks/use-auth";
 import { useLocation } from "wouter";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Chat() {
   const [input, setInput] = useState("");
+  const [isListening, setIsListening] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const { data: user } = useUser();
   const [, setLocation] = useLocation();
+  const { toast } = useToast();
+
+  const recognitionRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)) {
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      recognitionRef.current = new SpeechRecognition();
+      recognitionRef.current.continuous = false;
+      recognitionRef.current.interimResults = false;
+      recognitionRef.current.lang = 'es-LA';
+
+      recognitionRef.current.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript;
+        setInput(prev => prev + (prev ? " " : "") + transcript);
+        setIsListening(false);
+      };
+
+      recognitionRef.current.onerror = (event: any) => {
+        console.error("Speech recognition error:", event.error);
+        setIsListening(false);
+        toast({
+          title: "Error de voz",
+          description: "No se pudo procesar el audio.",
+          variant: "destructive"
+        });
+      };
+
+      recognitionRef.current.onend = () => {
+        setIsListening(false);
+      };
+    }
+  }, []);
+
+  const toggleListening = () => {
+    if (!recognitionRef.current) {
+      toast({
+        title: "No soportado",
+        description: "Tu navegador no soporta reconocimiento de voz.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (isListening) {
+      recognitionRef.current.stop();
+    } else {
+      recognitionRef.current.start();
+      setIsListening(true);
+    }
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast({
+      description: "Copiado al portapapeles",
+    });
+  };
+
+  const playResponse = (audioUrl?: string) => {
+    if (!audioUrl) {
+      toast({
+        description: "Audio no disponible para este mensaje.",
+      });
+      return;
+    }
+    const audio = new Audio(audioUrl);
+    audio.play().catch(e => {
+      console.warn("Audio playback blocked:", e);
+      toast({
+        description: "Haz clic para permitir el audio.",
+      });
+    });
+  };
 
   useEffect(() => {
     if (!user) {
@@ -128,12 +204,35 @@ export default function Chat() {
                       )}
                     </div>
 
-                    <div className={`p-4 rounded-2xl ${
+                    <div className={`p-4 rounded-2xl relative group/msg ${
                       msg.role === 'user' 
                         ? 'bg-accent/10 border border-accent/30 rounded-tr-sm text-foreground' 
                         : 'bg-primary/10 border border-primary/30 rounded-tl-sm text-primary-foreground text-white'
                     }`}>
-                      <p className="text-sm md:text-base leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+                      <p className="text-sm md:text-base leading-relaxed whitespace-pre-wrap pr-8">{msg.content}</p>
+                      
+                      <div className="absolute top-2 right-2 flex flex-col gap-1 opacity-0 group-hover/msg:opacity-100 transition-opacity">
+                        <button 
+                          onClick={() => copyToClipboard(msg.content)}
+                          className="p-1 hover:bg-white/10 rounded transition-colors"
+                          title="Copiar texto"
+                        >
+                          <Copy className="w-3 h-3 text-white/50" />
+                        </button>
+                        {msg.role === 'amanda' && (
+                          <button 
+                            onClick={() => {
+                              // We need to find the audioUrl from the history if available
+                              const historyItem = history.find(h => h.response === msg.content);
+                              playResponse((historyItem as any)?.audioUrl);
+                            }}
+                            className="p-1 hover:bg-white/10 rounded transition-colors"
+                            title="Escuchar respuesta"
+                          >
+                            <Volume2 className="w-3 h-3 text-white/50" />
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </motion.div>
@@ -157,8 +256,8 @@ export default function Chat() {
           )}
         </div>
 
-        <div className="shrink-0 pt-2">
-          <form onSubmit={handleSubmit} className="relative flex items-center">
+        <div className="shrink-0 pt-2 flex gap-2">
+          <form onSubmit={handleSubmit} className="relative flex-1 flex items-center">
             <input
               type="text"
               value={input}
@@ -170,11 +269,23 @@ export default function Chat() {
             <button
               type="submit"
               disabled={!input.trim() || chatMutation.isPending}
-              className="absolute right-2 p-2 bg-primary/20 text-primary rounded-full hover:bg-primary hover:text-background transition-all disabled:opacity-50 disabled:hover:bg-primary/20 disabled:hover:text-primary"
+              className="absolute right-2 p-2 bg-primary/20 text-primary rounded-full hover:bg-primary hover:text-background transition-all disabled:opacity-50"
             >
               <Send className="w-5 h-5" />
             </button>
           </form>
+          
+          <button
+            onClick={toggleListening}
+            disabled={chatMutation.isPending}
+            className={`p-4 rounded-full border transition-all ${
+              isListening 
+                ? 'bg-destructive/20 border-destructive text-destructive animate-pulse shadow-[0_0_15px_rgba(255,0,0,0.4)]' 
+                : 'bg-card/80 border-primary/30 text-primary hover:border-primary shadow-[0_0_15px_rgba(0,0,0,0.5)]'
+            }`}
+          >
+            {isListening ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+          </button>
         </div>
 
       </div>
