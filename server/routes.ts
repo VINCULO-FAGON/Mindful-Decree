@@ -117,7 +117,7 @@ export async function registerRoutes(
           
           aiResponseText = completion.choices[0].message.content || aiResponseText;
 
-          // Generate audio for Amanda
+          try { // Generate audio for Amanda
           const mp3 = await openai.audio.speech.create({
             model: "tts-1",
             voice: "nova", // Nova gives a nice female voice
@@ -126,6 +126,7 @@ export async function registerRoutes(
           const buffer = Buffer.from(await mp3.arrayBuffer());
           const audioBase64 = buffer.toString('base64');
           audioUrl = `data:audio/mp3;base64,${audioBase64}`;
+          } catch (ttsErr) { console.warn("TTS restricted:", ttsErr); }
           
         } catch (openaiError) {
           console.error("OpenAI error:", openaiError);

@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { api } from "@shared/routes";
 import { z } from "zod";
 
@@ -19,6 +20,7 @@ export function useUser() {
 
 export function useLogin() {
   const queryClient = useQueryClient();
+  const [, setLocation] = useLocation();
   
   return useMutation({
     mutationFn: async (data: z.infer<typeof api.auth.login.input>) => {
@@ -39,12 +41,14 @@ export function useLogin() {
     },
     onSuccess: (user) => {
       queryClient.setQueryData(AUTH_KEY, user);
+      setLocation("/");
     },
   });
 }
 
 export function useRegister() {
   const queryClient = useQueryClient();
+  const [, setLocation] = useLocation();
   
   return useMutation({
     mutationFn: async (data: z.infer<typeof api.auth.register.input>) => {
@@ -65,14 +69,18 @@ export function useRegister() {
     },
     onSuccess: (user) => {
       queryClient.setQueryData(AUTH_KEY, user);
+      setLocation("/");
     },
   });
 }
 
 export function useLogout() {
   const queryClient = useQueryClient();
+  const [, setLocation] = useLocation();
   return () => {
     localStorage.removeItem("yo_decreto_user");
     queryClient.setQueryData(AUTH_KEY, null);
+    queryClient.clear();
+    setLocation("/login");
   };
 }

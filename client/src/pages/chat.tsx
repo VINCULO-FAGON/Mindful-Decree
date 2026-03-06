@@ -59,9 +59,14 @@ export default function Chat() {
             // Refined audio playback logic
             const audio = new Audio(data.audioUrl);
             audio.playbackRate = 1.05; // Slightly faster for more youthful energy
-            audio.play().catch(e => {
-              console.warn("Audio playback blocked, requires user interaction or permission:", e);
-            });
+            const playPromise = audio.play();
+            
+            if (playPromise !== undefined) {
+              playPromise.catch(e => {
+                console.warn("Audio playback requires user interaction first:", e);
+                // Fallback: the user needs to click something to enable audio if browser blocks it
+              });
+            }
           } catch (e) {
             console.error("Failed to play audio:", e);
           }
