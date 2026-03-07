@@ -118,15 +118,18 @@ export async function registerRoutes(
           aiResponseText = completion.choices[0].message.content || aiResponseText;
 
           try { // Generate audio for Amanda
-          const mp3 = await openai.audio.speech.create({
-            model: "tts-1",
-            voice: "nova", // Nova gives a nice female voice
-            input: aiResponseText,
-          });
-          const buffer = Buffer.from(await mp3.arrayBuffer());
-          const audioBase64 = buffer.toString('base64');
-          audioUrl = `data:audio/mp3;base64,${audioBase64}`;
-          } catch (ttsErr) { console.warn("TTS restricted:", ttsErr); }
+            const mp3 = await openai.audio.speech.create({
+              model: "tts-1",
+              voice: "nova", // Nova gives a nice female voice
+              input: aiResponseText.substring(0, 4000), // Safety limit
+            });
+            const buffer = Buffer.from(await mp3.arrayBuffer());
+            const audioBase64 = buffer.toString('base64');
+            audioUrl = `data:audio/mp3;base64,${audioBase64}`;
+          } catch (ttsErr: any) { 
+            console.error("TTS Error details:", ttsErr.message || ttsErr);
+            // If TTS fails, we still return the text response
+          }
           
         } catch (openaiError) {
           console.error("OpenAI error:", openaiError);

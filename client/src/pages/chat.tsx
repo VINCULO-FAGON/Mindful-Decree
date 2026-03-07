@@ -75,7 +75,7 @@ export default function Chat() {
   const playResponse = (audioUrl?: string) => {
     if (!audioUrl) {
       toast({
-        description: "Audio no disponible para este mensaje.",
+        description: "El audio se está procesando o no está disponible para mensajes antiguos.",
       });
       return;
     }
@@ -83,7 +83,7 @@ export default function Chat() {
     audio.play().catch(e => {
       console.warn("Audio playback blocked:", e);
       toast({
-        description: "Haz clic para permitir el audio.",
+        description: "Haz clic en la pantalla para permitir el audio.",
       });
     });
   };
@@ -98,7 +98,7 @@ export default function Chat() {
   const chatMutation = useAmandaChat();
   
   // Local state to show optimistic messages
-  const [localMessages, setLocalMessages] = useState<Array<{role: 'user'|'amanda', content: string}>>([]);
+  const [localMessages, setLocalMessages] = useState<Array<{role: 'user'|'amanda', content: string, audioUrl?: string}>>([]);
 
   useEffect(() => {
     if (history.length > 0 && localMessages.length === 0) {
@@ -127,7 +127,11 @@ export default function Chat() {
 
     chatMutation.mutate(messageToSend, {
       onSuccess: (data) => {
-        setLocalMessages(prev => [...prev, { role: 'amanda', content: data.response }]);
+        setLocalMessages(prev => [...prev, { 
+          role: 'amanda', 
+          content: data.response,
+          audioUrl: data.audioUrl 
+        }]);
         
         // Play audio if provided by the API
         if (data.audioUrl) {
@@ -222,8 +226,7 @@ export default function Chat() {
                         {msg.role === 'amanda' && (
                           <button 
                             onClick={() => {
-                              const historyItem = history.find(h => h.response === msg.content);
-                              playResponse((historyItem as any)?.audioUrl);
+                              playResponse(msg.audioUrl);
                             }}
                             className="p-2 hover:bg-white/10 rounded-full transition-colors"
                             title="Escuchar respuesta"
