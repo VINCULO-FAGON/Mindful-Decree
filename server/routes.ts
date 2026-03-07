@@ -81,54 +81,39 @@ export async function registerRoutes(
       let audioUrl;
 
       if (process.env.AI_INTEGRATIONS_OPENAI_API_KEY) {
-        try {
-          const completion = await openai.chat.completions.create({
-            model: "gpt-4o", // Use more capable model
-            messages: [
-              {
-                role: "system",
-                content: `Identidad: Amanda, asistente de reeducación en adicciones. 
-                
-                Filosofía (Doc. Yo Decreto): Crees en la dignidad innata y el "renacer de los fracasos". Tu meta es la reeducación integral del carácter.
-                
-                Modelo TCC: Enfócate en el Carácter (experiencias adquiridas) para controlar el Temperamento (impulsos innatos).
-                
-                Protocolo de Respuesta:
-                1. Validar: Usa el "puente de relación" (empatía inicial).
-                2. Identificar: Señala si la falla es de confianza, autonomía o responsabilidad.
-                3. Acción: Ofrece una "Alternativa" (opción entre dos opiniones).
-                4. Seguridad: Ante riesgo de recaída o daño, prioriza el lema: "Tu vida vale más que un momento de evasión".
-                
-                Estilo: Breve, maternal, profesional y sin fricciones. No generes listas largas. Concreta sin simulación. Eres Amanda, el apoyo real en el bolsillo del estudiante.`
-              },
-              {
-                role: "user",
-                content: message
-              }
-            ],
-            temperature: 0.7,
-            max_tokens: 1000
-          });
-          
-          aiResponseText = completion.choices[0].message.content || aiResponseText;
-
           try { // Generate audio for Amanda
-            const mp3 = await openai.audio.speech.create({
-              model: "tts-1",
-              voice: "shimmer", // User requested shimmer voice
-              input: aiResponseText.substring(0, 4000), // Safety limit
+            const completion = await openai.chat.completions.create({
+              model: "gpt-4o",
+              messages: [
+                {
+                  role: "system",
+                  content: `Identidad: Amanda, asistente de reeducación en adicciones. 
+                  
+                  Filosofía (Doc. Yo Decreto): Crees en la dignidad innata y el "renacer de los fracasos". Tu meta es la reeducación integral del carácter.
+                  
+                  Modelo TCC: Enfócate en el Carácter (experiencias adquiridas) para controlar el Temperamento (impulsos innatos).
+                  
+                  Protocolo de Respuesta:
+                  1. Validar: Usa el "puente de relación" (empatía inicial).
+                  2. Identificar: Señala si la falla es de confianza, autonomía o responsabilidad.
+                  3. Acción: Ofrece una "Alternativa" (opción entre dos opiniones).
+                  4. Seguridad: Ante riesgo de recaída o daño, prioriza el lema: "Tu vida vale más que un momento de evasión".
+                  
+                  Estilo: Breve, maternal, profesional y sin fricciones. No generes listas largas. Concreta sin simulación. Eres Amanda, el apoyo real en el bolsillo del estudiante.`
+                },
+                { role: "user", content: message }
+              ],
+              temperature: 0.7
             });
-            const buffer = Buffer.from(await mp3.arrayBuffer());
-            const audioBase64 = buffer.toString('base64');
-            audioUrl = `data:audio/mp3;base64,${audioBase64}`;
-          } catch (ttsErr: any) { 
-            console.error("TTS Error details:", ttsErr.message || ttsErr);
-            // If TTS fails, we still return the text response
+            
+            aiResponseText = completion.choices[0].message.content || aiResponseText;
+
+            // Voice fallback for browsers that support it
+            // We'll mark the response as "text-only" for the frontend to use SpeechSynthesis
+            audioUrl = "speech-synthesis-fallback";
+          } catch (openaiError: any) {
+            console.error("OpenAI error:", openaiError.message || openaiError);
           }
-          
-        } catch (openaiError) {
-          console.error("OpenAI error:", openaiError);
-        }
       } else {
         aiResponseText = "Conexión neuronal activa. Soy Amanda AI, aquí estoy para apoyarte con honestidad y empatía.";
       }

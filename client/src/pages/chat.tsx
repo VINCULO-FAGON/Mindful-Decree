@@ -72,20 +72,42 @@ export default function Chat() {
     });
   };
 
-  const playResponse = (audioUrl?: string) => {
-    if (!audioUrl) {
+  const playResponse = (audioUrl?: string, text?: string) => {
+    if (!audioUrl && !text) {
       toast({
-        description: "El audio se está procesando o no está disponible para mensajes antiguos.",
+        description: "El audio se está procesando o no está disponible.",
       });
       return;
     }
-    const audio = new Audio(audioUrl);
-    audio.play().catch(e => {
-      console.warn("Audio playback blocked:", e);
-      toast({
-        description: "Haz clic en la pantalla para permitir el audio.",
+
+    if (audioUrl === "speech-synthesis-fallback" || (!audioUrl && text)) {
+      if ('speechSynthesis' in window) {
+        const utterance = new SpeechSynthesisUtterance(text || "");
+        utterance.lang = 'es-LA';
+        utterance.rate = 1.0;
+        utterance.pitch = 1.1; // Slightly higher for feminine tone
+        
+        // Try to find a Spanish female voice
+        const voices = window.speechSynthesis.getVoices();
+        const femaleVoice = voices.find(v => v.lang.startsWith('es') && (v.name.includes('female') || v.name.includes('Helena') || v.name.includes('Laura')));
+        if (femaleVoice) utterance.voice = femaleVoice;
+
+        window.speechSynthesis.speak(utterance);
+      } else {
+        toast({ description: "Tu navegador no soporta síntesis de voz." });
+      }
+      return;
+    }
+
+    if (audioUrl) {
+      const audio = new Audio(audioUrl);
+      audio.play().catch(e => {
+        console.warn("Audio playback blocked:", e);
+        toast({
+          description: "Haz clic en la pantalla para permitir el audio.",
+        });
       });
-    });
+    }
   };
 
   useEffect(() => {
@@ -226,7 +248,7 @@ export default function Chat() {
                         {msg.role === 'amanda' && (
                           <button 
                             onClick={() => {
-                              playResponse(msg.audioUrl);
+                              playResponse(msg.audioUrl, msg.content);
                             }}
                             className="p-2 hover:bg-white/10 rounded-full transition-colors"
                             title="Escuchar respuesta"
