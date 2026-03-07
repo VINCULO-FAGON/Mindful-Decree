@@ -214,22 +214,21 @@ export default function Chat() {
                       <div className="absolute top-2 right-2 flex flex-col gap-1 opacity-0 group-hover/msg:opacity-100 transition-opacity">
                         <button 
                           onClick={() => copyToClipboard(msg.content)}
-                          className="p-1 hover:bg-white/10 rounded transition-colors"
+                          className="p-2 hover:bg-white/10 rounded-full transition-colors"
                           title="Copiar texto"
                         >
-                          <Copy className="w-3 h-3 text-white/50" />
+                          <Copy className="w-4 h-4 text-white/70" />
                         </button>
                         {msg.role === 'amanda' && (
                           <button 
                             onClick={() => {
-                              // We need to find the audioUrl from the history if available
                               const historyItem = history.find(h => h.response === msg.content);
                               playResponse((historyItem as any)?.audioUrl);
                             }}
-                            className="p-1 hover:bg-white/10 rounded transition-colors"
+                            className="p-2 hover:bg-white/10 rounded-full transition-colors"
                             title="Escuchar respuesta"
                           >
-                            <Volume2 className="w-3 h-3 text-white/50" />
+                            <Volume2 className="w-4 h-4 text-white/70" />
                           </button>
                         )}
                       </div>
