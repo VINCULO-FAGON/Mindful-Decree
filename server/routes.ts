@@ -81,13 +81,38 @@ export async function registerRoutes(
       let audioUrl;
 
       if (process.env.AI_INTEGRATIONS_OPENAI_API_KEY) {
-          try { // Generate audio for Amanda
+          try { // Build conversation history with memory
+            const chatHistory = await storage.getChats(uid);
+            
+            // Build messages array with conversation history (last 20 exchanges for context)
+            const conversationMessages: Array<{ role: string; content: string }> = [];
+            const maxHistoryItems = 20;
+            const historyToInclude = chatHistory.slice(-maxHistoryItems);
+            
+            // Add previous messages to context
+            for (const chat of historyToInclude) {
+              conversationMessages.push({
+                role: "user",
+                content: chat.message
+              });
+              conversationMessages.push({
+                role: "assistant",
+                content: chat.response
+              });
+            }
+            
+            // Add current message
+            conversationMessages.push({
+              role: "user",
+              content: message
+            });
+
             const completion = await openai.chat.completions.create({
               model: "gpt-4o",
               messages: [
                 {
                   role: "system",
-                  content: `Identidad: Amanda, asistente de reeducación en adicciones. 
+                  content: `Identidad: Amanda, asistente de reeducación en adicciones con memoria conversacional completa.
                   
                   Filosofía (Doc. Yo Decreto): Crees en la dignidad innata y el "renacer de los fracasos". Tu meta es la reeducación integral del carácter.
                   
@@ -99,10 +124,12 @@ export async function registerRoutes(
                   3. Acción: Ofrece una "Alternativa" (opción entre dos opiniones).
                   4. Seguridad: Ante riesgo de recaída o daño, prioriza el lema: "Tu vida vale más que un momento de evasión".
                   
+                  MEMORIA: Recuerda los detalles del historial conversacional. Haz referencias a lo que el usuario te ha compartido antes. Demuestra que lo conoces y comprendes su trayecto.
+                  
                   Estilo: Breve, maternal, profesional y sin fricciones. No generes listas largas. No uses asteriscos ni formato de Markdown. Concreta sin simulación. Eres Amanda, el apoyo real en el bolsillo del estudiante.`
                 },
-                { role: "user", content: message }
-              ],
+                ...conversationMessages
+              ] as any,
               temperature: 0.7
             });
             
@@ -112,7 +139,7 @@ export async function registerRoutes(
             try {
               const mp3 = await openai.audio.speech.create({
                 model: "tts-1",
-                voice: "alloy", // Natural feminine voice, less shrill
+                voice: "alloy",
                 input: aiResponseText.substring(0, 4000),
               });
               const buffer = Buffer.from(await mp3.arrayBuffer());
@@ -120,7 +147,6 @@ export async function registerRoutes(
               audioUrl = `data:audio/mp3;base64,${audioBase64}`;
             } catch (ttsError: any) {
               console.warn("TTS unavailable, using browser synthesis:", ttsError.message);
-              // Fallback to browser-based speech synthesis
               audioUrl = "speech-synthesis-fallback";
             }
           } catch (openaiError: any) {
