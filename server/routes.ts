@@ -108,9 +108,21 @@ export async function registerRoutes(
             
             aiResponseText = completion.choices[0].message.content || aiResponseText;
 
-            // Voice fallback for browsers that support it
-            // We'll mark the response as "text-only" for the frontend to use SpeechSynthesis
-            audioUrl = "speech-synthesis-fallback";
+            // Try to generate audio using OpenAI TTS with alloy voice (more natural, less shrill)
+            try {
+              const mp3 = await openai.audio.speech.create({
+                model: "tts-1",
+                voice: "alloy", // Natural feminine voice, less shrill
+                input: aiResponseText.substring(0, 4000),
+              });
+              const buffer = Buffer.from(await mp3.arrayBuffer());
+              const audioBase64 = buffer.toString('base64');
+              audioUrl = `data:audio/mp3;base64,${audioBase64}`;
+            } catch (ttsError: any) {
+              console.warn("TTS unavailable, using browser synthesis:", ttsError.message);
+              // Fallback to browser-based speech synthesis
+              audioUrl = "speech-synthesis-fallback";
+            }
           } catch (openaiError: any) {
             console.error("OpenAI error:", openaiError.message || openaiError);
           }

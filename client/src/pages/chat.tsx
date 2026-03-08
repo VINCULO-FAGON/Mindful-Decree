@@ -85,10 +85,10 @@ export default function Chat() {
         const utterance = new SpeechSynthesisUtterance(text || "");
         utterance.lang = 'es-LA';
         utterance.rate = 0.95; // Natural speaking rate
-        utterance.pitch = 1.3; // Higher pitch for feminine voice
+        utterance.pitch = 1.0; // Natural pitch (not too high)
         utterance.volume = 1.0;
         
-        // Priority order for feminine Spanish voices
+        // Priority order for natural feminine Spanish voices
         const voices = window.speechSynthesis.getVoices();
         let selectedVoice = null;
         
