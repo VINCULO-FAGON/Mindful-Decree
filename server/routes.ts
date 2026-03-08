@@ -99,7 +99,7 @@ export async function registerRoutes(
                   3. Acción: Ofrece una "Alternativa" (opción entre dos opiniones).
                   4. Seguridad: Ante riesgo de recaída o daño, prioriza el lema: "Tu vida vale más que un momento de evasión".
                   
-                  Estilo: Breve, maternal, profesional y sin fricciones. No generes listas largas. Concreta sin simulación. Eres Amanda, el apoyo real en el bolsillo del estudiante.`
+                  Estilo: Breve, maternal, profesional y sin fricciones. No generes listas largas. No uses asteriscos ni formato de Markdown. Concreta sin simulación. Eres Amanda, el apoyo real en el bolsillo del estudiante.`
                 },
                 { role: "user", content: message }
               ],

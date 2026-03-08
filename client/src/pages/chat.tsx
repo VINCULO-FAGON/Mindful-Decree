@@ -87,9 +87,10 @@ export default function Chat() {
         utterance.rate = 1.0;
         utterance.pitch = 1.1; // Slightly higher for feminine tone
         
-        // Try to find a Spanish female voice
+        // Try to find Nova or similar feminine voice
         const voices = window.speechSynthesis.getVoices();
-        const femaleVoice = voices.find(v => v.lang.startsWith('es') && (v.name.includes('female') || v.name.includes('Helena') || v.name.includes('Laura')));
+        const novaVoice = voices.find(v => v.name.includes('nova') || v.name.includes('Nova'));
+        const femaleVoice = novaVoice || voices.find(v => v.lang.startsWith('es') && (v.name.includes('female') || v.name.includes('Helena') || v.name.includes('Laura')));
         if (femaleVoice) utterance.voice = femaleVoice;
 
         window.speechSynthesis.speak(utterance);
