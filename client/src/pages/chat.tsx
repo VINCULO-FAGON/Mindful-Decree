@@ -84,14 +84,35 @@ export default function Chat() {
       if ('speechSynthesis' in window) {
         const utterance = new SpeechSynthesisUtterance(text || "");
         utterance.lang = 'es-LA';
-        utterance.rate = 1.0;
-        utterance.pitch = 1.1; // Slightly higher for feminine tone
+        utterance.rate = 0.95; // Natural speaking rate
+        utterance.pitch = 1.3; // Higher pitch for feminine voice
+        utterance.volume = 1.0;
         
-        // Try to find Nova or similar feminine voice
+        // Priority order for feminine Spanish voices
         const voices = window.speechSynthesis.getVoices();
-        const novaVoice = voices.find(v => v.name.includes('nova') || v.name.includes('Nova'));
-        const femaleVoice = novaVoice || voices.find(v => v.lang.startsWith('es') && (v.name.includes('female') || v.name.includes('Helena') || v.name.includes('Laura')));
-        if (femaleVoice) utterance.voice = femaleVoice;
+        let selectedVoice = null;
+        
+        // First: Look for Google Spanish Female
+        selectedVoice = voices.find(v => v.name.includes('Google') && v.lang === 'es-LA' && v.name.includes('Female'));
+        
+        // Second: Look for female-specific voices in Spanish LA
+        if (!selectedVoice) {
+          selectedVoice = voices.find(v => v.lang === 'es-LA' && (v.name.includes('Female') || v.name.includes('female')));
+        }
+        
+        // Third: Look for any Spanish LA voice with feminine names
+        if (!selectedVoice) {
+          selectedVoice = voices.find(v => v.lang.startsWith('es') && (v.name.includes('Helena') || v.name.includes('Laura') || v.name.includes('Elena') || v.name.includes('Paulina')));
+        }
+        
+        // Fourth: Any Spanish voice
+        if (!selectedVoice) {
+          selectedVoice = voices.find(v => v.lang.startsWith('es'));
+        }
+        
+        if (selectedVoice) {
+          utterance.voice = selectedVoice;
+        }
 
         window.speechSynthesis.speak(utterance);
       } else {
