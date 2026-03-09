@@ -169,7 +169,7 @@ export default function Chat() {
     
     setLocalMessages(prev => [...prev, { role: 'user', content: messageToSend }]);
 
-    chatMutation.mutate(messageToSend, {
+    chatMutation.mutate({ message: messageToSend, userId: user?.id || 0 }, {
       onSuccess: (data) => {
         setLocalMessages(prev => [...prev, { 
           role: 'amanda', 

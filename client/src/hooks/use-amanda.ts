@@ -18,14 +18,13 @@ export function useAmandaHistory() {
 
 export function useAmandaChat() {
   const queryClient = useQueryClient();
-  const { data: user } = useUser();
   
   return useMutation({
-    mutationFn: async (message: string) => {
+    mutationFn: async (data: { message: string; userId: number }) => {
       const res = await fetch(api.amanda.chat.path, {
         method: api.amanda.chat.method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message, userId: user?.id }),
+        body: JSON.stringify(data),
       });
       
       if (!res.ok) {
@@ -34,8 +33,8 @@ export function useAmandaChat() {
       
       return api.amanda.chat.responses[200].parse(await res.json());
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [api.amanda.history.path, user?.id] });
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: [api.amanda.history.path, variables.userId] });
     },
   });
 }
